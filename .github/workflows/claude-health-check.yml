@@ -46,23 +46,9 @@ jobs:
       - name: Notify Success
         if: success()
         run: |
-          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          curl -s -X POST "${{ secrets.WEBHOOK_NOTIFICATION_URL }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "text": "✅ Claude Code Health Check PASSED",
-              "message": "Daily 8AM check succeeded",
-              "timestamp": "'"$TIMESTAMP"'"
-            }'
+          curl -d "daily claude session start triggered" https://ntfy.sh/${{ secrets.NTFY_TOPIC }}
 
       - name: Notify Failure
         if: failure()
         run: |
-          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          curl -s -X POST "${{ secrets.WEBHOOK_NOTIFICATION_URL }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "text": "🚨 Claude Code Health Check FAILED",
-              "message": "Check GitHub Actions logs for details",
-              "timestamp": "'"$TIMESTAMP"'"
-            }'
+          curl -d "daily claude session failed to start" https://ntfy.sh/${{ secrets.NTFY_TOPIC }}
