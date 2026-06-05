@@ -1,0 +1,68 @@
+name: Claude Code Health Check
+
+on:
+  push:
+  schedule:
+    - cron: '30 1 * * *'   # 7:00 AM IST (UTC+5:30)
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run Claude Code Health Check
+        id: claude_check
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # Run claude in non-interactive mode with -p flag
+          RESPONSE=$(claude -p "Hi" --output-format json 2>&1)
+          EXIT_CODE=$?
+
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          
+          # Fix for multi-line output in GitHub Actions
+          echo "response<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESPONSE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✅ Claude Code responded successfully"
+          else
+            echo "❌ Claude Code failed with exit code $EXIT_CODE"
+            exit 1
+          fi
+
+      - name: Notify Success
+        if: success()
+        run: |
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          curl -s -X POST "${{ secrets.WEBHOOK_NOTIFICATION_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "✅ Claude Code Health Check PASSED",
+              "message": "Daily 8AM check succeeded",
+              "timestamp": "'"$TIMESTAMP"'"
+            }'
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          curl -s -X POST "${{ secrets.WEBHOOK_NOTIFICATION_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "🚨 Claude Code Health Check FAILED",
+              "message": "Check GitHub Actions logs for details",
+              "timestamp": "'"$TIMESTAMP"'"
+            }'
