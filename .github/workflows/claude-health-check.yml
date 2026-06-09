@@ -4,7 +4,8 @@ on:
   push:
   schedule:
     - cron: '0 6 * * *'
-      timezone: 'Asia/Kolkata'
+    - cron: '30 4 * * *'
+    # 4:30 AM UTC is 10:00 AM IST
   workflow_dispatch:
 
 jobs:
