@@ -1,9 +1,10 @@
 name: Claude Code Health Check
 
 on:
+  push:
   schedule:
-    - cron: '33 1 * * *'
-    - cron: '23 0 * * *'
+    - cron: '33 21 * * *'
+    - cron: '23 20 * * *'
     # 2:00 AM UTC is 7:00 AM ISD
   workflow_dispatch:
 
